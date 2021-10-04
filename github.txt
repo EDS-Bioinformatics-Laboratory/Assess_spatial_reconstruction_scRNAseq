@@ -1,0 +1,22 @@
+#
+# Information about GitHub repository and git.
+#
+# For general instructions see GitHub-Instructions_v4.docx in this directory
+#
+# While developing, software should be pulled and pushed at least once per day (possibly using
+# different branches)
+#
+
+
+### URL of github repository ####
+https://github.com/EDS-Bioinformatics-Laboratory/Martinez_2012 
+
+
+#### Any other information you want to include about the use of git with this specific repository ####
+
+
+
+
+
+
+
