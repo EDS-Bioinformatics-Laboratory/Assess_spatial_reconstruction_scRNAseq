@@ -15,7 +15,6 @@ import datasets
 
 ```{r cars}
 
-original_cell_names <- read.table("~/reproduce_liver_analysis/cell_names.txt", quote="\"", comment.char="")
 liver_lobules_assigned_layers_to_cells <- read.csv("C:/Users/deand/OneDrive/Documents/Table_S1_completed/liver_lobules_assigned_layers_to_cells.txt", sep=";",row.names = 1)
 
 cells_with_assigned_layers<-data.frame(row.names(liver_lobules_assigned_layers_to_cells),liver_lobules_assigned_layers_to_cells$layer)
@@ -24,8 +23,7 @@ colnames(cells_with_assigned_layers)[2]<-'layer'
 
 
 CSOmap_affinity_matrix <- read.csv2("~/CSOmap_affinity_matrix_mouselb.txt", header=FALSE)
-colnames(CSOmap_affinity_matrix)<-original_cell_names$V1
-rownames(CSOmap_affinity_matrix)<-original_cell_names$V1
+
 
 
 ```
