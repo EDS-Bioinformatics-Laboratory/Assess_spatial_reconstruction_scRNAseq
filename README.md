@@ -1,9 +1,9 @@
-# Project name
-Assess spatial reconstruction from scRNAseq
+# Assess spatial reconstruction from scRNAseq
 
 
-**Date:**
-5-10-2021
+
+**Date5-10-2021:** 5-10-2021
+
 **Short Description:**
 Internship during which we assessed the assumptions made by CSOmap and novoSpaRc to reconstruct the cellular organization from scRNAseq data
 
