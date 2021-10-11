@@ -1,4 +1,4 @@
 ### Directory content
 
-Describe content of this directory. The content of every file should be clear.
+This directory contains the script that is used to calculate the TPMs from the brain cortex fishseq counts.
 
