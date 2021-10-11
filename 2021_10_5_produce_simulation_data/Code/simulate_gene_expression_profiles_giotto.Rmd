@@ -1,0 +1,498 @@
+---
+title: "Untitled"
+author: "Dean de Haas"
+date: "27-9-2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+load required libraries
+
+```{r cars}
+library(Giotto)
+```
+
+set working directory
+
+```{r pressure, echo=FALSE}
+my_working_dir = '/mnt/c/Users/deand/OneDrive/Documents/'
+
+
+
+
+
+
+```
+
+#set giotto python path
+# set python path to your preferred python version path
+# set python path to NULL if you want to automatically install (only the 1st time) and use the giotto miniconda environment
+
+```{r pressure, echo=FALSE}
+python_path = NULL 
+if(is.null(python_path)) {
+  installGiottoEnvironment()
+}
+```
+
+(optional) set Giotto instructions
+
+```{r pressure, echo=FALSE}
+ 
+instrs = createGiottoInstructions(save_plot = TRUE, 
+                                  show_plot = FALSE,
+                                  save_dir = my_working_dir, 
+                                  python_path = python_path)
+```
+
+create giotto object from provided paths ####
+
+```{r pressure, echo=FALSE}
+
+expr_path = paste0(my_working_dir, "cortex_svz_expression.txt")
+loc_path = paste0(my_working_dir, "cortex_svz_centroids_coord.txt")
+meta_path = paste0(my_working_dir, "cortex_svz_centroids_annot.txt")
+```
+
+Stitch the multiple field of views together
+
+```{r pressure, echo=FALSE}
+
+## first merge location and additional metadata
+SS_locations = data.table::fread(loc_path)
+cortex_fields = data.table::fread(meta_path)
+SS_loc_annot = data.table::merge.data.table(SS_locations, cortex_fields, by = 'ID')
+SS_loc_annot[, ID := factor(ID, levels = paste0('cell_',1:913))]
+data.table::setorder(SS_loc_annot, ID)
+
+## create file with offset information
+my_offset_file = data.table::data.table(field = c(0, 1, 2, 3, 4, 5, 6),
+                                        x_offset = c(0, 1654.97, 1750.75, 1674.35, 675.5, 2048, 675),
+                                        y_offset = c(0, 0, 0, 0, -1438.02, -1438.02, 0))
+
+## create a stitch file
+stitch_file = stitchFieldCoordinates(location_file = SS_loc_annot,
+                                     offset_file = my_offset_file,
+                                     cumulate_offset_x = T,
+                                     cumulate_offset_y = F,
+                                     field_col = 'FOV',
+                                     reverse_final_x = F,
+                                     reverse_final_y = T)
+stitch_file    = stitch_file[,.(ID, X_final, Y_final)]
+my_offset_file = my_offset_file[,.(field, x_offset_final, y_offset_final)]
+```
+
+create giotto object
+
+```{r pressure, echo=FALSE}
+## create Giotto object
+SS_seqfish <- createGiottoObject(raw_exprs = expr_path,
+                                 spatial_locs = stitch_file,
+                                 offset_file = my_offset_file,
+                                 instructions = instrs)
+
+## add additional annotation if wanted
+SS_seqfish = addCellMetadata(SS_seqfish,
+                             new_metadata = cortex_fields,
+                             by_column = T,
+                             column_cell_ID = 'ID')
+```
+
+normalize and take subset of all the cells
+
+
+```{r pressure, echo=FALSE}
+SS_seqfish <- normalizeGiotto(gobject = SS_seqfish, scalefactor = 6000, verbose = T)
+
+cell_metadata = pDataDT(SS_seqfish)
+cortex_cell_ids = cell_metadata[FOV %in% 0:3]$cell_ID
+SS_seqfish = subsetGiotto(SS_seqfish, cell_ids = cortex_cell_ids)
+```
+
+identify spatially informatie genes
+
+```{r pressure, echo=FALSE}
+## delaunay network: stats + creation
+plotStatDelaunayNetwork(gobject = SS_seqfish, maximum_distance = 400, save_plot = F)
+SS_seqfish = createSpatialNetwork(gobject = SS_seqfish, minimum_k = 2, maximum_distance_delaunay = 400)
+
+## create spatial networks based on k and/or distance from centroid
+SS_seqfish <- createSpatialNetwork(gobject = SS_seqfish, method = 'kNN', k = 5, name = 'spatial_network')
+SS_seqfish <- createSpatialNetwork(gobject = SS_seqfish, method = 'kNN', k = 10, name = 'large_network')
+SS_seqfish <- createSpatialNetwork(gobject = SS_seqfish, method = 'kNN', k = 100,
+                                   maximum_distance_knn = 200, minimum_k = 2, name = 'distance_network')
+
+## visualize different spatial networks on first field (~ layer 1)
+cell_metadata = pDataDT(SS_seqfish)
+field1_ids = cell_metadata[FOV == 0]$cell_ID
+subSS_seqfish = subsetGiotto(SS_seqfish, cell_ids = field1_ids)
+
+spatPlot(gobject = subSS_seqfish, show_network = T,
+         network_color = 'blue', spatial_network_name = 'Delaunay_network',
+         point_size = 2.5, cell_color = 'cell_types', 
+         save_param = c(save_name = '9_a_spatial_network_delaunay', base_height = 6))
+
+
+
+
+dgft<-SS_seqfish@cell_metadata$cell_ID
+# these are the spatially informative genes
+km_spatialgenes = binSpect(SS_seqfish)
+```
+
+the function from giotto to simulate gene expression levels per cell
+
+```{r pressure, echo=FALSE}
+simulateOneGenePatternGiottoObject2 = function(gobject,
+                                               pattern_name = 'pattern',
+                                               pattern_cell_ids = NULL,
+                                               gene_name = NULL,
+                                               spatial_prob = 0.95,
+                                               gradient_direction = NULL,
+                                               show_pattern = TRUE,
+                                               pattern_colors = c('in' = 'green', 'out' = 'red'),
+                                               ...) {
+  
+  # data.table variables
+  cell_ID = sdimx_y = sdimx = sdimy = NULL
+  #print(cell_ID = sdimx_y = sdimx = sdimy = NULL)
+  if(is.null(pattern_cell_ids)) {
+    stop('pattern_cell_ids can not be NULL \n')
+  }
+  
+  ## create and add annotation for pattern
+  cell_meta = pDataDT(gobject)
+  cell_meta[, (pattern_name) := ifelse(cell_ID %in% pattern_cell_ids, 'in', 'out')]
+  newgobject = addCellMetadata(gobject,
+                               new_metadata = cell_meta[,c('cell_ID', pattern_name), with = F],
+                               by_column = T,
+                               column_cell_ID = 'cell_ID')
+  #View(newgobject)
+  # show pattern
+  if(show_pattern == TRUE) {
+    print('we are in')
+    spatPlot2D(gobject = newgobject, save_plot = T, cell_color_code = pattern_colors,
+               point_size = 2, cell_color = pattern_name)
+  }
+  
+  ## merge cell metadata and cell coordinate data
+  cell_meta = pDataDT(newgobject)
+  cell_coord = newgobject@spatial_locs
+  cell_meta = data.table::merge.data.table(cell_meta, cell_coord, by = 'cell_ID')
+  ## get number of cells within pattern
+  cell_number = nrow(cell_meta[get(pattern_name) == 'in'])
+  #print(cell_number)
+  
+  ## normalized expression
+  expr_data = newgobject@norm_expr
+  #View(expr_data)
+  #View(newgobject@norm_expr)
+  result_list = list()
+  
+  ## raw expression
+  raw_expr_data = newgobject@raw_exprs
+  raw_result_list = list()
+  
+  
+  ## create the spatial expression pattern for the specified gene
+  # 1. rank all gene values from the cells from high to low
+  # 2. move the highest expressing values to the spatial pattern using a probability
+  #     - 0.5 is the control = random
+  #     - 1 is perfection: all the highest values go to the pattern
+  #     - 0.5 to 1 is decreasing noise levels
+  
+  if(is.null(gene_name)) stop('a gene name needs to be provided')
+  
+  
+  
+  # rank genes
+  #View(expr_data)
+  gene_vector = expr_data[rownames(expr_data) == gene_name, ]
+  #View(gene_vector)
+  sort_expr_gene = sort(gene_vector, decreasing = T)
+  #View(sort_expr_gene)
+  # number of cells in and out the pattern
+  total_cell_number = length(sort_expr_gene)
+  #print('total')
+  #print(total_cell_number)
+  #print(sort_expr_gene)
+  remaining_cell_number = total_cell_number - cell_number
+  
+  # calculate outside probability
+  outside_prob = 1 - spatial_prob
+  #print(outside_prob)
+  #print('rep1')
+  #print(spatial_prob)
+  #print(remaining_cell_number)
+  prob_vector = c(rep(spatial_prob, cell_number), rep(outside_prob, remaining_cell_number))
+  #print('rep2')
+  # first get the 'in' pattern sample values randomly
+  sample_values = sample(sort_expr_gene, replace = F, size = cell_number, prob = prob_vector)
+  
+  # then take the remaining 'out' pattern values randomly
+  remain_values = sort_expr_gene[!names(sort_expr_gene) %in% names(sample_values)]
+  remain_values = sample(remain_values, size = length(remain_values))
+  
+  
+  
+  ## A. within pattern ##
+  # ------------------- #
+  in_cell_meta = cell_meta[get(pattern_name) == 'in']
+  
+  # if gradient is wanted
+  # does not work with 0.5!! is not random!!
+  if(!is.null(gradient_direction)) {
+    # sort in_ids according to x, y or  xy coordinates to create gradient
+    in_cell_meta[, sdimx_y := abs(sdimx)+ abs(sdimy)]
+    # order according to gradient direction
+    in_cell_meta = in_cell_meta[order(get(gradient_direction))]
+  }
+  in_ids = in_cell_meta$cell_ID
+  
+  # preparation for raw matrix
+  sample_values_id_vector = names(sample_values)
+  names(sample_values_id_vector) = in_ids
+  
+  
+  ## B. outside pattern ##
+  # -------------------- #
+  out_ids = cell_meta[get(pattern_name) == 'out']$cell_ID
+  
+  # preparation for raw matrix
+  remain_values_id_vector = names(remain_values)
+  names(remain_values_id_vector) = out_ids
+  
+  ## raw matrix
+  # swap the cell ids #
+  raw_gene_vector = raw_expr_data[rownames(raw_expr_data) == gene_name,]
+  
+  raw_new_sample_vector = raw_gene_vector[sample_values_id_vector]
+  names(raw_new_sample_vector) = names(sample_values_id_vector)
+  
+  raw_new_remain_vector = raw_gene_vector[remain_values_id_vector]
+  names(raw_new_remain_vector) = names(remain_values_id_vector)
+  
+  new_sim_raw_values = c(raw_new_sample_vector, raw_new_remain_vector)
+  new_sim_raw_values = new_sim_raw_values[names(raw_gene_vector)]
+  
+  # change the original matrices
+  raw_expr_data[rownames(raw_expr_data) == gene_name,] = new_sim_raw_values
+
+  exprrr=new_sim_raw_values
+  newgobject@raw_exprs = raw_expr_data
+  
+  # recalculate normalized values
+  newgobject <- normalizeGiotto(gobject = newgobject, ...)
+  newgobject <- addStatistics(gobject = newgobject)
+  
+  return(new_sim_raw_values)
+  
+}
+
+```
+
+```{r pressure, echo=FALSE}
+#below selected cells will have higher gene expressions
+selected_cells = cell_metadata[FOV %in% 2:3]$cell_ID
+#slect the top spatially informative genes
+top_spatially_informative_genes<-c('A'=head(km_spatialgenes$genes,42))
+# assign higher expression levels to these genes in the selected cella
+simgene=simulateOneGenePatternGiottoObject2(SS_seqfish,pattern_name = "in", pattern_cell_ids = selected_cells, gene_name= top_spatially_informative_genes[1],show_pattern = T)
+sim_gene_matrix<-as.matrix(simgene)
+sim_gene_dataframe<-data.frame(simgene)
+simulated_gene_dataset<-data.frame('cells'=rownames(sim_gene_dataframe))
+for (gene in top_spatially_informative_genes) {
+  simgene=data.frame(simulateOneGenePatternGiottoObject2(SS_seqfish,pattern_name = "in", pattern_cell_ids = selected_cells, gene_name= gene,show_pattern = T))
+  colnames(simgene)<-gene
+  simulated_gene_dataset<-cbind(simulated_gene_dataset,simgene)
+}
+#write the dataframe with new expression levels to output
+frame<-simulated_gene_dataset[,-c(1)]
+write.table(frame,'/mnt/c/Users/deand/OneDrive/Documents/simulldata2.txt')
+```
+
+```{r pressure, echo=FALSE}
+
+simulateOneGenePatternGiottoObject3 = function(gobject,
+                                               pattern_name = 'pattern',
+                                               pattern_cell_ids = NULL,
+                                               gene_name = NULL,
+                                               spatial_prob = 0.95,
+                                               gradient_direction = NULL,
+                                               show_pattern = TRUE,
+                                               pattern_colors = c('in' = 'green', 'out' = 'red'),
+                                               ...) {
+  
+  # data.table variables
+  cell_ID = sdimx_y = sdimx = sdimy = NULL
+  #print(cell_ID = sdimx_y = sdimx = sdimy = NULL)
+  if(is.null(pattern_cell_ids)) {
+    stop('pattern_cell_ids can not be NULL \n')
+  }
+  
+  ## create and add annotation for pattern
+  cell_meta = pDataDT(gobject)
+  cell_meta[, (pattern_name) := ifelse(cell_ID %in% pattern_cell_ids, 'in', 'out')]
+  newgobject = addCellMetadata(gobject,
+                               new_metadata = cell_meta[,c('cell_ID', pattern_name), with = F],
+                               by_column = T,
+                               column_cell_ID = 'cell_ID')
+  #View(newgobject)
+  # show pattern
+  if(show_pattern == TRUE) {
+    print('we are in')
+    spatPlot2D(gobject = newgobject, save_plot = T, cell_color_code = pattern_colors,
+               point_size = 2, cell_color = pattern_name)
+  }
+  
+  ## merge cell metadata and cell coordinate data
+  cell_meta = pDataDT(newgobject)
+  cell_coord = newgobject@spatial_locs
+  cell_meta = data.table::merge.data.table(cell_meta, cell_coord, by = 'cell_ID')
+  ## get number of cells within pattern
+  cell_number = nrow(cell_meta[get(pattern_name) == 'in'])
+  #print(cell_number)
+  
+  ## normalized expression
+  expr_data = newgobject@norm_expr
+  #View(expr_data)
+  #View(newgobject@norm_expr)
+  result_list = list()
+  
+  ## raw expression
+  raw_expr_data = newgobject@raw_exprs
+  raw_result_list = list()
+  
+  
+  ## create the spatial expression pattern for the specified gene
+  # 1. rank all gene values from the cells from high to low
+  # 2. move the highest expressing values to the spatial pattern using a probability
+  #     - 0.5 is the control = random
+  #     - 1 is perfection: all the highest values go to the pattern
+  #     - 0.5 to 1 is decreasing noise levels
+  
+  if(is.null(gene_name)) stop('a gene name needs to be provided')
+  
+  
+  
+  # rank genes
+  #View(expr_data)
+  gene_vector = expr_data[rownames(expr_data) == gene_name, ]
+  #View(gene_vector)
+  sort_expr_gene = sort(gene_vector, decreasing = T)
+  #View(sort_expr_gene)
+  # number of cells in and out the pattern
+  total_cell_number = length(sort_expr_gene)
+  #print('total')
+  #print(total_cell_number)
+  #print(sort_expr_gene)
+  remaining_cell_number = total_cell_number - cell_number
+  
+  # calculate outside probability
+  outside_prob = 1 - spatial_prob
+  #print(outside_prob)
+  #print('rep1')
+  #print(spatial_prob)
+  #print(remaining_cell_number)
+  prob_vector = c(rep(spatial_prob, cell_number), rep(outside_prob, remaining_cell_number))
+  #print('rep2')
+  # first get the 'in' pattern sample values randomly
+  sample_values = sample(sort_expr_gene, replace = F, size = cell_number, prob = prob_vector)
+  
+  # then take the remaining 'out' pattern values randomly
+  remain_values = sort_expr_gene[!names(sort_expr_gene) %in% names(sample_values)]
+  remain_values = sample(remain_values, size = length(remain_values))
+  
+  
+  
+  ## A. within pattern ##
+  # ------------------- #
+  in_cell_meta = cell_meta[get(pattern_name) == 'in']
+  
+  # if gradient is wanted
+  # does not work with 0.5!! is not random!!
+  if(!is.null(gradient_direction)) {
+    # sort in_ids according to x, y or  xy coordinates to create gradient
+    in_cell_meta[, sdimx_y := abs(sdimx)+ abs(sdimy)]
+    # order according to gradient direction
+    in_cell_meta = in_cell_meta[order(get(gradient_direction))]
+  }
+  in_ids = in_cell_meta$cell_ID
+  
+  # preparation for raw matrix
+  sample_values_id_vector = names(sample_values)
+  names(sample_values_id_vector) = in_ids
+  
+  
+  ## B. outside pattern ##
+  # -------------------- #
+  out_ids = cell_meta[get(pattern_name) == 'out']$cell_ID
+  
+  # preparation for raw matrix
+  remain_values_id_vector = names(remain_values)
+  names(remain_values_id_vector) = out_ids
+  
+  ## raw matrix
+  # swap the cell ids #
+  raw_gene_vector = raw_expr_data[rownames(raw_expr_data) == gene_name,]
+  
+  raw_new_sample_vector = raw_gene_vector[sample_values_id_vector]
+  names(raw_new_sample_vector) = names(sample_values_id_vector)
+  
+  raw_new_remain_vector = raw_gene_vector[remain_values_id_vector]
+  names(raw_new_remain_vector) = names(remain_values_id_vector)
+  
+  new_sim_raw_values = c(raw_new_sample_vector, raw_new_remain_vector)
+  new_sim_raw_values = new_sim_raw_values[names(raw_gene_vector)]
+  
+  # change the original matrices
+  raw_expr_data[rownames(raw_expr_data) == gene_name,] = new_sim_raw_values
+  
+  exprrr=new_sim_raw_values
+  newgobject@raw_exprs = raw_expr_data
+  
+  # recalculate normalized values
+  newgobject <- normalizeGiotto(gobject = newgobject, ...)
+  newgobject <- addStatistics(gobject = newgobject)
+  
+  return(newgobject)
+  
+}
+
+
+```
+
+```{r pressure, echo=FALSE}
+
+frame<-simulated_gene_dataset[,-c(1)]
+v<-rowSums(frame)
+ddf<-data.frame(SS_seqfish@spatial_locs$sdimx,SS_seqfish@spatial_locs$sdimy,sim_gene_matrix)
+
+library(ggplot2)
+flitz=simulateOneGenePatternGiottoObject3(SS_seqfish,pattern_name = "in", pattern_cell_ids = pszt, gene_name= df[1],show_pattern = T)
+View(flitz@cell_metadata)
+zz<-flitz@cell_metadata[,c(1,4)]
+colnames(zz)[2]<-'group'
+ggplot(ddf,aes(SS_seqfish@spatial_locs$sdimx,SS_seqfish@spatial_locs$sdimy, colour = zz$group ))+geom_point()
+
+locs<-data.frame('cells'=zz$cell_ID,'X'=SS_seqfish@spatial_locs$sdimx,'Y'=SS_seqfish@spatial_locs$sdimy,'group'=zz$group)
+write.table(locs,'/mnt/c/Users/deand/OneDrive/Documents/simulldata_locs.txt')
+
+
+ggplot(ddf,aes(SS_seqfish@spatial_locs$sdimx,SS_seqfish@spatial_locs$sdimy, color = v ))+geom_point()
+
+View(as.data.frame(rowSums(ddf)))
+
+
+```
+
+
+
+
+
+
+
+
