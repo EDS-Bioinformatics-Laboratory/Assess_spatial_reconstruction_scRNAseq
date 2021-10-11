@@ -1,0 +1,98 @@
+---
+title: "cso_map_reconstruction_weighted_distance_from_center_per_layer"
+author: "Dean de Haas"
+date: "21-5-2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+
+library(Hmisc)
+library(ggplot2)
+library(dplyr)
+```
+
+import datasets
+
+```{r cars}
+
+#import this for the cell names and layer annotation
+liver_lobules_assigned_layers_to_cells <- read.csv("C:/Users/deand/OneDrive/Documents/Table_S1_completed/liver_lobules_assigned_layers_to_cells.txt", sep=";",row.names = 1)
+
+#import the x and y positions 
+CSOcell_xy_positions <- read.delim("C:/Users/deand/OneDrive/Documents/x_y_positions_mousyliver.txt", header=FALSE,sep=',')
+
+#include center position 
+CSOcell_xy_positions<-rbind(CSOcell_xy_positions,c(0,0))
+CSO_cell_distances<-as.matrix(dist(CSOcell_xy_positions,'euclidean'))
+CSO_distances<-as.data.frame(CSO_cell_distances[,nrow(CSO_cell_distances)])
+
+#import probabilities 
+layer_probalilities<-read.csv("C:/Users/deand/OneDrive/Documents/Table_S1_completed/probabilities_cells_assignment_to_layers.txt", sep="",header = F)
+View(layer_probalilities)
+distance_to_center<-data.frame()
+#calulate distance from each cell to the center of the tissue
+distance_to_center <- CSO_distances$`CSO_cell_distances[, nrow(CSO_cell_distances)]`[1:1415] 
+distance_to_center2<-as.data.frame(distance_to_center)
+#write.table(distance_to_center2,"C:/Users/deand/OneDrive/Documents/distance_toC.txt",sep=',')
+
+
+```
+
+calculate weighted mean per layer
+
+```{r cars}
+
+
+meansz<-c(weighted.mean(distance_to_center ,layer_probalilities$V3),
+weighted.mean(distance_to_center ,layer_probalilities$V4),
+weighted.mean(distance_to_center ,layer_probalilities$V5),
+weighted.mean(distance_to_center ,layer_probalilities$V6),
+weighted.mean(distance_to_center ,layer_probalilities$V7),
+weighted.mean(distance_to_center ,layer_probalilities$V8),
+weighted.mean(distance_to_center ,layer_probalilities$V9),
+weighted.mean(distance_to_center ,layer_probalilities$V10),
+weighted.mean(distance_to_center ,layer_probalilities$V11))
+```
+
+calculate weighted standard deviation
+
+```{r cars}
+mstd<-sqrt(c(wtd.var(distance_to_center ,layer_probalilities$V3),
+wtd.var(distance_to_center ,layer_probalilities$V4),
+wtd.var(distance_to_center ,layer_probalilities$V5),
+wtd.var(distance_to_center ,layer_probalilities$V6),
+wtd.var(distance_to_center ,layer_probalilities$V7),
+wtd.var(distance_to_center ,layer_probalilities$V8),
+wtd.var(distance_to_center ,layer_probalilities$V9),
+wtd.var(distance_to_center ,layer_probalilities$V10),
+wtd.var(distance_to_center ,layer_probalilities$V11)))
+```
+
+plot the distances to the centers per layer
+
+
+```{r cars}
+
+layers<-c(1,
+2,
+3,
+4,
+5,
+6,
+7,
+8,9)
+
+dfz<-data.frame('Layer'=layers,'mean'=meansz,'std'=mstd)
+dfz$mean
+cor(dfz$mean,dfz$Layer,method = 'pearson')
+dfff<-data.frame('layers'=as.factor(liver_lobules_assigned_layers_to_cells$layer),'X'=CSOcell_xy_positions2$V1,'Y'=CSOcell_xy_positions2$V2)
+
+ggplot(dfff,aes(X,Y,color=layers))+geom_point(size=3)+xlab('X coordinate')+ylab('Y coordinate')+theme(text = element_text(size = 15),axis.text.x = element_text( size=15),axis.text.y = element_text( size=15),legend.position = "bottom")+guides(color = guide_legend(override.aes = list(size=5)))#+ guides(shape = guide_legend(override.aes = list(size = 10)))
+
+my_y_title <- expression(paste("CSOmap: ", italic("reconstruction performance")))
+ggplot(dfz,aes(Layer,mean))+geom_point(size=3)+geom_line(size=0.1)+ggtitle(my_y_title)+geom_errorbar(aes(ymin=mean-std, ymax=mean+std), width=.2,position=position_dodge(.9))+scale_x_continuous(breaks = c(seq(1,9)))+xlab('Layers')+ylab('Euclidean distance to center')+theme(text = element_text(size = 15),axis.text.x = element_text( size=15),axis.text.y = element_text( size=15))
+
+
+
+```
