@@ -13,6 +13,7 @@ Perry Moerland
 
 This repository contains the files needed to preprocess the scRNAseq datafiles and the files that calculated and show the correlation between the reconstructed tissue and how the tissue was supposed to be
 The files are found in the different repositories and the origina datafiles have been shared with Perry Moerland
+The manuscript corresponding to this repository has been shared with Perry Moerland
 
 
 
