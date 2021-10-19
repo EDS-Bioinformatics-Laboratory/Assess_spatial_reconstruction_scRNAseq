@@ -16,23 +16,23 @@ library(scater)
 import cortex dataset
 
 ```{r cars}
-raw_expression_counts_liver_lobules_genes_splitted_capital_genes <- read.delim2("~/cortrex_counts_with_capital_names.txt")
+raw_expression_counts_cortex_genes_splitted_capital_genes <- read.delim2("~/cortrex_counts_with_capital_names.txt")
 
 ```
 
 setup requirements
 
 ```{r cars}
-nammes<-raw_expression_counts_liver_lobules_genes_splitted_capital_genes[,c(1,2)]
-rownames(raw_expression_counts_liver_lobules_genes_splitted_capital_genes)<-raw_expression_counts_liver_lobules_genes_splitted_capital_genes$genes_C
-raw_expression_counts_liver_lobules_genes_splitted_capital_genes<-raw_expression_counts_liver_lobules_genes_splitted_capital_genes[,-c(1,2)]      
+nammes<-raw_expression_counts_cortex_genes_splitted_capital_genes[,c(1,2)]
+rownames(raw_expression_counts_cortex_genes_splitted_capital_genes)<-raw_expression_counts_cortex_genes_splitted_capital_genes$genes_C
+raw_expression_counts_cortex_genes_splitted_capital_genes<-raw_expression_counts_cortex_genes_splitted_capital_genes[,-c(1,2)]      
 
 #set all counts as numerical values
-raw_expression_counts_liver_lobules_genes_splitted_capital_genes[] <- lapply(raw_expression_counts_liver_lobules_genes_splitted_capital_genes, as.numeric)
+raw_expression_counts_cortex_genes_splitted_capital_genes[] <- lapply(raw_expression_counts_cortex_genes_splitted_capital_genes, as.numeric)
 
 #remove the cells with no expression
-raw_expression_counts_liver_lobules_genes_splitted_capital_genes<-raw_expression_counts_liver_lobules_genes_splitted_capital_genes[c(rowSums(raw_expression_counts_liver_lobules_genes_splitted_capital_genes)>0),]
-expressed_genes<-data.frame('genes'=rownames(raw_expression_counts_liver_lobules_genes_splitted_capital_genes))
+raw_expression_counts_cortex_genes_splitted_capital_genes<-raw_expression_counts_cortex_genes_splitted_capital_genes[c(rowSums(raw_expression_counts_cortex_genes_splitted_capital_genes)>0),]
+expressed_genes<-data.frame('genes'=rownames(raw_expression_counts_cortex_genes_splitted_capital_genes))
 expressed_genes<-merge(nammes,expressed_genes,by.x = 'genes_C',by.y = 'genes')
 
 
@@ -51,9 +51,9 @@ colnames(genes_dataset)[1]<-'orignal_gene_names'
 colnames(genes_dataset)[2]<-'alliases'
 sum(is.na(genes_dataset$alliases))
 
-raw_expression_counts_liver_lobules_genes_splitted_capital_genes <-  read.delim2("C:/Users/deand/OneDrive/Documents/cortex_data/cortrex_counts_with_capital_names.txt")
+raw_expression_counts_cortex_genes_splitted_capital_genes <-  read.delim2("~/cortrex_counts_with_capital_names.txt")
 
-genes_names_allias_lenghts<-merge(raw_expression_counts_liver_lobules_genes_splitted_capital_genes,genes_dataset, by.x= 'genes',by.y='orignal_gene_names')
+genes_names_allias_lenghts<-merge(raw_expression_counts_cortex_genes_splitted_capital_genes,genes_dataset, by.x= 'genes',by.y='orignal_gene_names')
 genes_counts_allias_lenghts<-genes_names_allias_lenghts
 
 ```
@@ -61,7 +61,7 @@ genes_counts_allias_lenghts<-genes_names_allias_lenghts
 check if the original gene name or the alias can be found in the ligand receptor database
 
 ```{r cars}
-LR_pairs <- read.delim("~/CSOmap/data/scRNA_liver_lobules/LR_pairs.txt", header=FALSE)
+LR_pairs <- read.delim("~/LR_pairs.txt", header=FALSE)
 
 communtication<-append(LR_pairs$V1,LR_pairs$V2)
 communtication<-as.data.frame(communtication)
@@ -108,7 +108,7 @@ for(i in 2:nrow(genes_counts_allias_lenghts)) {       # for-loop over rows
   gene_data_frame<-rbind(gene_data_frame,new_gene)
 }
 View(gene_data_frame)
-write.table(gene_data_frame,'C:/Users/deand/OneDrive/Documents/gendata_seqfish.txt')
+write.table(gene_data_frame,'~/gendata_seqfish.txt')
 
 
 ```
@@ -129,5 +129,5 @@ expression2<-expressions
 expression2 <- calculateTPM(expression2)
 expression2<-as.data.frame(expression2)
 
-write.table(expression2,'C:/Users/deand/OneDrive/Documents/CSOmap/data/TPM_mouse_seqfish.txt')
+write.table(expression2,'~/TPM_mouse_seqfish.txt')
 ```
