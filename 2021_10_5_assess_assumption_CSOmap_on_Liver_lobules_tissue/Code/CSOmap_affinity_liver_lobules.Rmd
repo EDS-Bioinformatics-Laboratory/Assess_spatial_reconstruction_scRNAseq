@@ -15,14 +15,14 @@ import datasets
 
 ```{r cars}
 
-liver_lobules_assigned_layers_to_cells <- read.csv("C:/Users/deand/OneDrive/Documents/Table_S1_completed/liver_lobules_assigned_layers_to_cells.txt", sep=";",row.names = 1)
+liver_lobules_assigned_layers_to_cells <- read.csv("~/liver_lobules_assigned_to_layers_per_cell.txt", sep=";",row.names = 1)
 
 cells_with_assigned_layers<-data.frame(row.names(liver_lobules_assigned_layers_to_cells),liver_lobules_assigned_layers_to_cells$layer)
 colnames(cells_with_assigned_layers)[1]<-'cells'
 colnames(cells_with_assigned_layers)[2]<-'layer'
 
 
-CSOmap_affinity_matrix <- read.csv2("~/CSOmap_affinity_matrix_mouselb.txt", header=FALSE)
+CSOmap_affinity_matrix <- read.csv2("~/aff_matrix_liver_lobules.txt", header=FALSE)
 
 
 
