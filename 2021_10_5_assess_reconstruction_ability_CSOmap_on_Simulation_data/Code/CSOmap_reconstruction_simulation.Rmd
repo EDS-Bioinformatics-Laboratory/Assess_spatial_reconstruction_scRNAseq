@@ -15,10 +15,10 @@ import dataset
 
 ```{r cars}
 #import true positions of the cells
-original_XY_positions <- read.csv("~/simulldata_locs.txt", sep="")
+original_XY_positions <- read.csv("~/simulated_data_true_positions.txt", sep="")
 
 #import positions of the cells calculated by CSOmap
-CSOmap_calculated_xy_positions<- read.csv("C:/Users/deand/OneDrive/Documents/CSOmap/data/giotto_422_sim_interactionish/x_y_positions_sim_giotto_422_V2.txt", header=FALSE)
+CSOmap_calculated_xy_positions<- read.csv("~/CSOmap_calculated_positions_simulated_data.txt", header=FALSE)
 original_XY_positions$group<-as.factor(original_XY_positions$group)
 levels(original_XY_positions$group) <- list("Group 1" = "in", "Group 2" = "out")
 
