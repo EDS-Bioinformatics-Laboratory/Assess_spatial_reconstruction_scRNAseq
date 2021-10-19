@@ -15,11 +15,11 @@ import datasets
 
 ```{r cars}
 #import original positions of the cells
-original_positions <- read.csv("~/stitsch_file.txt", row.names=1, sep="")
+original_positions <- read.csv("~/simulation_data_true_positions.txt", row.names=1, sep="")
 colnames(original_positions)<-c('ID','X_revised','Y_revised')
 
 #import affinity matrix
-CSOmap_affinity_matrix <- read.csv("~/CSOmap_affinity_matrix_mousy_seqfish.txt", header=FALSE)
+CSOmap_affinity_matrix <- read.csv("~/aff_matrix_simulation_data.txt", header=FALSE)
 
 ```
 
