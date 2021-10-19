@@ -14,9 +14,9 @@ library(ggplot2)
 load thw names of the cells and the calculated distance matrix by novosparc
 
 ```{r cars}
-cell_names <- read.table("~/reproduce_liver_analysis/cell_names.txt", quote="\"", comment.char="")
-novosparc_distance_matrix <- read.csv("C:/Users/deand/OneDrive/Documents/Liver_lobules/novosparc_files/normalized_mouse_liver_LR.csv", row.names=1)
-liver_lobules_assigned_layers_to_cells <- read.csv("C:/Users/deand/OneDrive/Documents/Table_S1_completed/liver_lobules_assigned_layers_to_cells.txt", sep=";",row.names = 1)
+cell_names <- read.table("~/cell_names.txt", quote="\"", comment.char="")
+novosparc_distance_matrix <- read.csv("~/distance_matrix_liver_lobules.csv", row.names=1)
+liver_lobules_assigned_layers_to_cells <- read.csv(~/liver_lobules_assigned_to_layers_per_cell.txt", sep=";",row.names = 1)
 ```
 
 assign names to the matreix and remove the redundant entries
