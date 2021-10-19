@@ -1,0 +1,13 @@
+#Download CSOmap from https://codeocean.com/capsule/2860903/tree/v1 
+#open CSOmap in MATLAB 2016B (or open it in codeocean)
+#go in to the code directory in CSOmap
+#run the command runme('"name of the directory that contains the required files"') for instance:
+runme('giotto_422_sim_interactionish');
+#The previous command runs CSOmap's internal code and outputs an object
+#use the code importdata('directory_where_the_results_were_saved')
+object=importdata('~\CSOmap\results\giotto_422_sim_interactionish\analyst.mat');
+#save the important content of the object into a txt file.
+First save the affinity matrix such as:
+dlmwrite('C:/Users/deand/OneDrive/Documents/AF_matrix_simulation_data.txt',object.affinitymat);
+Then save the calculated positions in the tissue by CSOmap
+dlmwrite('C:/Users/deand/OneDrive/Documents/calculated_x_y_positions_brain_cortex.txt',object.result2d);
