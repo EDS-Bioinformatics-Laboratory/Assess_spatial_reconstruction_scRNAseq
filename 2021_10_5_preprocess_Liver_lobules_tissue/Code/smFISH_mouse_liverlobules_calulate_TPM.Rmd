@@ -16,7 +16,7 @@ library(scater)
 import cortex dataset
 
 ```{r cars}
-raw_expression_counts_liver_lobules_genes_splitted_capital_genes <- read.delim2("C:/Users/deand/OneDrive/Documents/reproduce_liver_analysis/raw_expression_counts_liver_lobules_genes_splitted_with_counted_number_of_subgenes.txt")
+raw_expression_counts_liver_lobules_genes_splitted_capital_genes <- read.delim2("~/raw_expression_counts_liver_lobules_genes_splitted_with_counted_number_of_subgenes.txt")
 
 
 ```
