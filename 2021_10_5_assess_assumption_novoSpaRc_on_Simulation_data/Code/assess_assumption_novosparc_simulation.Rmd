@@ -14,12 +14,12 @@ library(ggplot2)
 import dataset
 
 ```{r cars}
-original_positions <- read.csv("~/simulldata_locs.txt", sep="")
+original_positions <- read.csv("~/simulation_data_true_positions.txt", sep="")
 original_positions$group<-as.factor(original_positions$group)
 levels(original_positions$group) <- list("Group 1" = "in", "Group 2" = "out")
 library(ggplot2)
 ggplot(original_positions,aes(X,Y,color=group))+geom_point(size=3)+xlab('X coordinate')+ylab('Y coordinate')+theme(text = element_text(size = 15),axis.text.x = element_text( size=15),axis.text.y = element_text( size=15))
-novosparc_distance_matrix <- read.csv("C:/Users/deand/OneDrive/Documents/cortex_data/novosparc_files/normalized_mouse_sim_LR.csv", row.names=1)
+novosparc_distance_matrix <- read.csv("~/distance_matrix_simulation_data.csv", row.names=1)
 
 ```
 
