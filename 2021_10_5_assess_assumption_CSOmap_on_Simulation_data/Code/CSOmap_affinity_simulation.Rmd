@@ -15,9 +15,9 @@ import datasets
 
 ```{r cars}
 
-original_positions <- read.csv("~/simulldata_locs.txt", sep="")
+original_positions <- read.csv("~/simulation_data_true_positions.txt", sep="")
 
-CSOmap_calculated_affinity_matrix <- read.csv("~/CSOmap_calculated_affinity_matrix_sim_giotto2.txt", header=FALSE)
+CSOmap_calculated_affinity_matrix <- read.csv("~/aff_matrix_simulation_data.txt", header=FALSE)
 colnames(CSOmap_calculated_affinity_matrix)<-original_positions$cells
 rownames(CSOmap_calculated_affinity_matrix)<-original_positions$cells
 
