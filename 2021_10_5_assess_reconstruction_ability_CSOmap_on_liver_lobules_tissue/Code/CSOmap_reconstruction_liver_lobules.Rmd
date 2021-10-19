@@ -17,10 +17,10 @@ import datasets
 ```{r cars}
 
 #import this for the cell names and layer annotation
-liver_lobules_assigned_layers_to_cells <- read.csv("C:/Users/deand/OneDrive/Documents/Table_S1_completed/liver_lobules_assigned_layers_to_cells.txt", sep=";",row.names = 1)
+liver_lobules_assigned_layers_to_cells <- read.csv("~/liver_lobules_assigned_to_layers_per_cell.txt", sep=";",row.names = 1)
 
 #import the x and y positions 
-CSOcell_xy_positions <- read.delim("C:/Users/deand/OneDrive/Documents/x_y_positions_mousyliver.txt", header=FALSE,sep=',')
+CSOcell_xy_positions <- read.delim("~/CSOmap_calculated_positions_liver_lobules_tissue.txt", header=FALSE,sep=',')
 
 #include center position 
 CSOcell_xy_positions<-rbind(CSOcell_xy_positions,c(0,0))
@@ -28,7 +28,7 @@ CSO_cell_distances<-as.matrix(dist(CSOcell_xy_positions,'euclidean'))
 CSO_distances<-as.data.frame(CSO_cell_distances[,nrow(CSO_cell_distances)])
 
 #import probabilities 
-layer_probalilities<-read.csv("C:/Users/deand/OneDrive/Documents/Table_S1_completed/probabilities_cells_assignment_to_layers.txt", sep="",header = F)
+layer_probalilities<-read.csv("~/probabilities_cells_assignment_to_layers.txt", sep="",header = F)
 View(layer_probalilities)
 distance_to_center<-data.frame()
 #calulate distance from each cell to the center of the tissue
