@@ -14,7 +14,7 @@ library(ggplot2)
 import datasets
 ```{r cars}
 #import X and Y positions of mouse brain cortex
-original_X_Y_positions <- read.csv("~/stitsch_file.txt", row.names=1, sep="")
+original_X_Y_positions <- read.csv("~/brain_cortex_true_positions.txt", row.names=1, sep="")
 colnames(original_X_Y_positions)<-c('ID','X_revised','Y_revised')
 
 #plot the cells
@@ -22,7 +22,7 @@ ggplot(original_X_Y_positions,aes(X_revised,Y_revised))+geom_point(size=3)+xlab(
 
 
 #import X and Y positions calculated by CSOmap
-X_Y_positions_calculated_CSOmap<- read.csv("~/x_y_positions_mousy_seqfish.txt", header=FALSE)
+X_Y_positions_calculated_CSOmap<- read.csv("~/CSOmap_calculated_positions_braon_cortex.txt", header=FALSE)
 ggplot(X_Y_positions_calculated_CSOmap,aes(V1,V2))+geom_point(size=3) +xlab('X coordinate')+ylab('Y coordinate') +theme(text = element_text(size = 15),axis.text.x = element_text( size=15),axis.text.y = element_text( size=15)) +guides(color = guide_legend(override.aes = list(size=5))) 
 
 ```
