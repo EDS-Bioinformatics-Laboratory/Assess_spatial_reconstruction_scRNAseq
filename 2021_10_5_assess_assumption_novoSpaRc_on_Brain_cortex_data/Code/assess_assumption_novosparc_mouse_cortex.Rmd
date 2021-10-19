@@ -15,11 +15,11 @@ import datasets
 
 ```{r cars}
 
-original_positions <- read.csv("~/stitsch_file.txt", row.names=1, sep="")
+original_positions <- read.csv("~/brain_cortex_true_positions.txt", row.names=1, sep="")
 colnames(original_positions)<-c('ID','X_revised','Y_revised')
 
 
-novosSpaRC_distance_matrix <- read.csv("C:/Users/deand/OneDrive/Documents/cortex_data/novosparc_files/normalized_mouse_cortex.csv", row.names=1)
+novosSpaRC_distance_matrix <- read.csv("~/distance_matrix_brain_cortex.csv", row.names=1)
 
 ```
 
