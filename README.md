@@ -9,7 +9,7 @@ Code from the internship of Dean de Haas. Goal is to assess the assumptions made
 Dean de Haas
 Perry Moerland
 
-This repository contains the files needed to preprocess the scRNA-seq data and the files used for calculating and plotting the correlation between the reconstructed tissue and the original tissue.
+This repository contains the code needed to preprocess the scRNA-seq data and the code used for calculating and plotting the correlation between the reconstructed tissue and the original tissue.
 
 The original data files can be found https://drive.google.com/drive/folders/1zmrrXcdz-WZ6dW1MxZqYsj_O0Zq3DgTk?usp=sharing. 
 
