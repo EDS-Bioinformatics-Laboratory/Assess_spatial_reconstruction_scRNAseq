@@ -11,7 +11,7 @@ Perry Moerland
 
 This repository contains the code needed to preprocess the scRNA-seq data and the code used for calculating and plotting the correlation between the reconstructed tissue and the original tissue.
 
-The original data files can be found https://drive.google.com/drive/folders/1zmrrXcdz-WZ6dW1MxZqYsj_O0Zq3DgTk?usp=sharing. 
+The original data files can be found at https://drive.google.com/drive/folders/1zmrrXcdz-WZ6dW1MxZqYsj_O0Zq3DgTk?usp=sharing. 
 
 The thesis can be found at https://www.overleaf.com/8697663533xkwrdszmdgmt
 
