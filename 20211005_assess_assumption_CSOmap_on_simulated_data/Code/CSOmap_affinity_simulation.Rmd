@@ -1,0 +1,51 @@
+---
+title: "csomap affinity simulation"
+author: "Dean de Haas"
+date: "26-5-2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library('dplyr')
+library('reshape2')
+library(ggplot2)
+```
+
+import datasets
+
+```{r cars}
+
+original_positions <- read.csv("~/simulation_data_true_positions.txt", sep="")
+
+CSOmap_calculated_affinity_matrix <- read.csv("~/aff_matrix_simulation_data.txt", header=FALSE)
+colnames(CSOmap_calculated_affinity_matrix)<-original_positions$cells
+rownames(CSOmap_calculated_affinity_matrix)<-original_positions$cells
+
+```
+
+calculate affinity
+
+```{r pressure, echo=FALSE}
+distances_original_positions<-as.numeric(as.CSOmap_calculated_affinity_matrixrix(dist(original_positions[,c(2,3)],'euclidean')))
+CSOmap_affinities<-as.numeric(as.CSOmap_calculated_affinity_matrixrix(CSOmap_calculated_affinity_matrix))
+
+
+combined_distances<-data.frame(distances_original_positions,CSOmap_affinities)
+combined_distances$bin<-cut(combined_distances$distances_original_positions,c(seq(0,7000,500)))
+table(combined_distances$bin)
+
+
+bin_mean <-aggregate(combined_distances$CSOmap_affinities, list(combined_distances$bin), function(x) mean = mean(x)) 
+cor.test(combined_distances$distances_original_positions,combined_distances$CSOmap_affinities,method='spearman')
+bin_sd <-aggregate(combined_distances$CSOmap_affinities, list(combined_distances$bin), function(x) sd = sd(x))
+#View(bin_mean)
+
+
+df<-data.frame(bin_mean,bin_sd$x)
+df$Euclidean_distance<-c(seq(500,7000,500))
+my_y_title <- expression(paste("CSOmap's assumption: ", italic("affinity")))
+ggplot(df,aes(Euclidean_distance,x))+geom_point(size=3)+ggtitle(my_y_title)+geom_errorbar(aes(ymin=as.numeric(x)-as.numeric(bin_sd.x),ymax=as.numeric(x)+as.numeric(bin_sd.x)), width=100,position=position_dodge(.9)) +xlab("Reference spatial Euclidean distance") + ylab("Pairwise affinities")+theme(text = element_text(size = 15),axis.text.x = element_text( size=15),axis.text.y = element_text( size=15))+geom_line(size=0.1)+scale_x_continuous( breaks=c(0,500,1500,2500,3500,4500,5500,6500))
+
+```
+
+

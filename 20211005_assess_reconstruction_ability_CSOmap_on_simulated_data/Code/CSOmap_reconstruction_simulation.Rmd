@@ -1,0 +1,60 @@
+---
+title: "CSOmap_simulation_data"
+author: "Dean de Haas"
+date: "21-6-2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library('dplyr')
+library('reshape2')
+library(ggplot2)
+```
+
+import dataset
+
+```{r cars}
+#import true positions of the cells
+original_XY_positions <- read.csv("~/simulated_data_true_positions.txt", sep="")
+
+#import positions of the cells calculated by CSOmap
+CSOmap_calculated_xy_positions<- read.csv("~/CSOmap_calculated_positions_simulated_data.txt", header=FALSE)
+original_XY_positions$group<-as.factor(original_XY_positions$group)
+levels(original_XY_positions$group) <- list("Group 1" = "in", "Group 2" = "out")
+
+
+#plot positions calculated by CSOmap
+ggplot(CSOmap_calculated_xy_positions,aes(V1,V2,color=original_XY_positions$group))+geom_point(size=3)+xlab('X coordinate')+ylab('Y coordinate')+theme(text = element_text(size = 15),axis.text.x = element_text( size=15),axis.text.y = element_text( size=15)) + scale_color_discrete(name = "group")
+
+```
+
+calculate correlation between true positions and positions calculated by CSOmap
+
+```{r pressure, echo=FALSE}
+
+distance_between_original_cells<-as.numeric(dist(original_XY_positions[,c(2,3)],'euclidean'))
+distance_between_original_cells<-as.vector(distance_between_original_cells)
+
+distance_between_CSOmap_calculated_xy_positions_cells<-as.numeric(dist(CSOmap_calculated_xy_positions,'euclidean'))
+
+
+combination_of_all_distances<-data.frame(distance_between_original_cells,distance_between_CSOmap_calculated_xy_positions_cells)
+combination_of_all_distances$bin<-cut(combination_of_all_distances$distance_between_original_cells,c(seq(0,7000,500)))
+table(combination_of_all_distances$bin)
+
+
+
+bin_mean <-aggregate(combination_of_all_distances$distance_between_CSOmap_calculated_xy_positions_cells, list(combination_of_all_distances$bin), function(x) mean = mean(x)) 
+cor.test(combination_of_all_distances$distance_between_original_cells,combination_of_all_distances$distance_between_CSOmap_calculated_xy_positions_cells,method='spearman')
+bin_sd <-aggregate(combination_of_all_distances$distance_between_CSOmap_calculated_xy_positions_cells, list(combination_of_all_distances$bin), function(x) sd = sd(x))
+
+
+
+df<-data.frame(bin_mean,bin_sd$x)
+df$Euclidean_distance<-c(seq(500,7000,500))
+my_y_title <- expression(paste("CSOmap: ", italic("reconstruction performance")))
+ggplot(df,aes(Euclidean_distance,x))+geom_point(size=3)+ggtitle(my_y_title)+geom_errorbar(aes(ymin=as.numeric(x)-as.numeric(bin_sd.x),ymax=as.numeric(x)+as.numeric(bin_sd.x)), width=100,position=position_dodge(.9)) +xlab("Reference spatial Euclidean distance") + ylab("Reconstructed spatial Euclidean distance")+theme(text = element_text(size = 15),axis.text.x = element_text( size=15),axis.text.y = element_text( size=15))+geom_line(size=0.1)+scale_x_continuous( breaks=c(0,500,1500,2500,3500,4500,5500,6500))#+scale_x_discrete(breaks=c(seq(0,4000,500)))
+
+
+
+```

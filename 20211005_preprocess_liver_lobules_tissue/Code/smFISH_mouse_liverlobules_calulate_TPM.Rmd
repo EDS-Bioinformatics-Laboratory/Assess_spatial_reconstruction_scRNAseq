@@ -1,0 +1,157 @@
+---
+title: "smFISH__daataset_preprocessing"
+author: "Dean de Haas"
+date: "23-8-2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(EDASeq)
+library(limma)
+library("biomaRt")
+library(dplyr)
+library(scater)
+```
+
+import cortex dataset
+
+```{r cars}
+raw_expression_counts_liver_lobules_genes_splitted_capital_genes <- read.delim2("~/raw_expression_counts_liver_lobules_genes_splitted_with_counted_number_of_subgenes.txt")
+
+
+```
+
+setup requirements
+
+```{r cars}
+raw_expression_counts_liver_lobules_genes_splitted_capital_genes<-raw_expression_counts_liver_lobules_genes_splitted_capital_genes[!duplicated(raw_expression_counts_liver_lobules_genes_splitted_capital_genes$genes_C), ]
+nammes<-raw_expression_counts_liver_lobules_genes_splitted_capital_genes[,c(1,2)]
+rownames(raw_expression_counts_liver_lobules_genes_splitted_capital_genes)<-raw_expression_counts_liver_lobules_genes_splitted_capital_genes$genes_C
+
+#set all counts as numerical values
+raw_expression_counts_liver_lobules_genes_splitted_capital_genes<-raw_expression_counts_liver_lobules_genes_splitted_capital_genes[,-c(1,2,1418,1419)]         
+raw_expression_counts_liver_lobules_genes_splitted_capital_genes[] <- lapply(raw_expression_counts_liver_lobules_genes_splitted_capital_genes, as.numeric)
+
+#remove the cells with no expression
+
+raw_expression_counts_liver_lobules_genes_splitted_capital_genes[is.na(raw_expression_counts_liver_lobules_genes_splitted_capital_genes)] <- 0
+raw_expression_counts_liver_lobules_genes_splitted_capital_genes<-raw_expression_counts_liver_lobules_genes_splitted_capital_genes[c(rowSums(raw_expression_counts_liver_lobules_genes_splitted_capital_genes)>0),]
+
+expressed_genes<-data.frame('genes'=rownames(raw_expression_counts_liver_lobules_genes_splitted_capital_genes))
+expressed_genes<-merge(nammes,expressed_genes,by.x = 'genes_C',by.y = 'genes')
+
+```
+
+find the aliases for the genes in our dataset
+
+```{r cars}
+
+allias<-alias2SymbolTable(expressed_genes$genes, species = "Mm")
+allias <-as.data.frame(allias)
+#combine the alliases and the original gene names in a dataframe
+genes_dataset<-data.frame( expressed_genes$genes,allias$allias)
+colnames(genes_dataset)[1]<-'orignal_gene_names'
+colnames(genes_dataset)[2]<-'alliases'
+#View(genes_dataset)
+sum(is.na(genes_dataset$alliases))
+
+raw_expression_counts_liver_lobules_genes_splitted_capital_genes <- read.delim2("C:/Users/deand/OneDrive/Documents/reproduce_liver_analysis/raw_expression_counts_liver_lobules_genes_splitted_with_counted_number_of_subgenes.txt")
+raw_expression_counts_liver_lobules_genes_splitted_capital_genes<-raw_expression_counts_liver_lobules_genes_splitted_capital_genes[!duplicated(raw_expression_counts_liver_lobules_genes_splitted_capital_genes$genes_C), ]
+
+genes_names_allias_lenghts<-merge(raw_expression_counts_liver_lobules_genes_splitted_capital_genes,genes_dataset, by.x= 'genes',by.y='orignal_gene_names')
+genes_counts_allias_lenghts<-genes_names_allias_lenghts[,-c(1419)]
+
+```
+
+check if the original gene name or the alias can be found in the ligand receptor database
+
+```{r cars}
+LR_pairs <- read.delim("~/CSOmap/data/scRNA_liver_lobules/LR_pairs.txt", header=FALSE)
+
+communtication<-append(LR_pairs$V1,LR_pairs$V2)
+communtication<-as.data.frame(communtication)
+View(communtication)
+communtication<-communtication %>% distinct(communtication, .keep_all = TRUE)
+
+i=1
+if ( is.na(match(genes_counts_allias_lenghts$genes_C[i],communtication$communtication)) ) {
+  #zit er dus niet in
+  if ( is.na(genes_counts_allias_lenghts$alliases[i]) ) {
+    new_gene<-data.frame(genes_counts_allias_lenghts$genes[i],'no',genes_counts_allias_lenghts[i,3:1418],genes_counts_allias_lenghts$alliases[i])
+  } else { new_gene<-data.frame(genes_counts_allias_lenghts$alliases[i],'no',genes_counts_allias_lenghts[i,3:1418],genes_counts_allias_lenghts$genes[i])
+  }
+
+  
+} else {
+  new_gene<-data.frame(genes_counts_allias_lenghts$genes[i],'yes',genes_counts_allias_lenghts[i,3:1418],genes_counts_allias_lenghts$alliases[i])
+}
+
+gene_data_frame<-as.data.frame(new_gene)
+colnames(gene_data_frame)[1]<-'gene'
+colnames(gene_data_frame)[2]<-''
+colnames(gene_data_frame)[2]<-'yn'
+colnames(gene_data_frame)[1419]<-'ori'
+#View(gene_data_frame)
+
+for(i in 2:nrow(genes_counts_allias_lenghts)) {       # for-loop over rows
+  print(i)
+  if ( is.na(match(genes_counts_allias_lenghts$genes_C[i],communtication$communtication)) ) {
+    #zit er dus niet in
+    if ( is.na(genes_counts_allias_lenghts$alliases[i]) ) {
+      new_gene<-data.frame(genes_counts_allias_lenghts$genes[i],'no',genes_counts_allias_lenghts[i,3:1418],genes_counts_allias_lenghts$alliases[i])
+    } else { new_gene<-data.frame(genes_counts_allias_lenghts$alliases[i],'no',genes_counts_allias_lenghts[i,3:1418],genes_counts_allias_lenghts$genes[i])
+    }
+    
+    
+  } else {
+    new_gene<-data.frame(genes_counts_allias_lenghts$genes[i],'yes',genes_counts_allias_lenghts[i,3:1418],genes_counts_allias_lenghts$alliases[i])
+  }
+  
+  colnames(new_gene)[1]<-'gene'
+  colnames(new_gene)[2]<-''
+  colnames(new_gene)[2]<-'yn'
+  colnames(new_gene)[1419]<-'ori'
+  gene_data_frame<-rbind(gene_data_frame,new_gene)
+}
+View(gene_data_frame)
+write.table(gene_data_frame,'C:/Users/deand/OneDrive/Documents/gendata_mouse_liver.txt')
+
+
+
+```
+
+calulate tpm's from the raw counts
+
+```{r cars}
+gene_data_frame<- read.csv("~/gendata_mouse_liver.txt", sep="")
+gene_data_frame2<-gene_data_frame
+colnames(gene_data_frame2)[3]<-'Cell1'
+colnames(gene_data_frame2)[2]<-'yn'
+levels_frame<-data.frame(do.call("rbind", strsplit(as.character(gene_data_frame2$Levels), "!", fixed = TRUE)))
+pre_duplicate_findings<-cbind(gene_data_frame2,levels_frame)
+pre_duplicate_findings$yn[pre_duplicate_findings$yn=='no']<-2
+pre_duplicate_findings$yn[pre_duplicate_findings$yn=='yes']<-1
+pre_duplicate_findings<-pre_duplicate_findings[with(pre_duplicate_findings, order(yn)), ]  
+post_duplicates_removal<-pre_duplicate_findings %>% distinct(X1, .keep_all = TRUE)
+#now only indiviual genes remain however, some genes still have the same name through their alliases 
+#I could take the average of these genes but I have decided to keep them in for the normalization and removing them from the final dataset
+sum(duplicated(post_duplicates_removal$gene))
+indexes<-which(duplicated(post_duplicates_removal$gene))
+post_duplicates_removal$gene[indexes]<-post_duplicates_removal$ori[indexes]
+sum(duplicated(post_duplicates_removal$gene))
+names_lenght_Levels<-post_duplicates_removal[,c(1,2,1418,1419,1420,1421)]
+expressions<- post_duplicates_removal[,-c(1,2,1418,1419,1420,1421)]
+#row.names(expression2)<-names_lenght_Levels$gene
+expressions[] <- lapply(expressions, as.numeric)
+
+expression2<-expressions
+expression2[is.na(expression2)] <- 0
+expression2 <- calculateTPM(expression2)
+expression2<-as.data.frame(expression2)
+expression2$genes<-names_lenght_Levels$gene
+
+expression2<-expression2 %>% distinct(genes, .keep_all = TRUE)
+row.names(expression2)<-expression2$genes
+expression2<-expression2[,-c(1416)]
+write.table(expression2,'C:/Users/deand/OneDrive/Documents/CSOmap/data/TPM_mouse.txt')
+```

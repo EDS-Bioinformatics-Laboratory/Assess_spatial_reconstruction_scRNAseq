@@ -1,0 +1,59 @@
+---
+title: "nvosparc_simulation_data"
+author: "Dean de Haas"
+date: "22-6-2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(dplyr)
+library(reshape2)
+library(ggplot2)
+```
+
+import dataset
+
+```{r cars}
+original_positions <- read.csv("~/simulation_data_true_positions.txt", sep="")
+original_positions$group<-as.factor(original_positions$group)
+levels(original_positions$group) <- list("Group 1" = "in", "Group 2" = "out")
+library(ggplot2)
+ggplot(original_positions,aes(X,Y,color=group))+geom_point(size=3)+xlab('X coordinate')+ylab('Y coordinate')+theme(text = element_text(size = 15),axis.text.x = element_text( size=15),axis.text.y = element_text( size=15))
+novosparc_distance_matrix <- read.csv("~/distance_matrix_simulation_data.csv", row.names=1)
+
+```
+
+assumption novosparc
+
+```{r pressure, echo=FALSE}
+
+novosparc_distance_matrix<-as.matrix(novosparc_distance_matrix)
+novosparc_distance_matrix[upper.tri(novosparc_distance_matrix,diag=T)]<--1000000
+# vectorize the matrix 
+novosparc_distance_vector <- melt( novosparc_distance_matrix,id.vars=c('from','to'))
+#remove the redundant cells from the matrix (e.g. the 0 values that we previously created)
+novosparc_distance_vector_minus_redundant_cells<-novosparc_distance_vector[!(novosparc_distance_vector$value==-1000000),]
+true_distances<-as.data.frame(as.numeric(dist(original_positions[,c(2,3)])))
+
+#########################################################################################
+#calculate the distance between the cells in euclidean space and place in correct format#
+#########################################################################################
+#calculate euclidean distance between the different cells
+novosparc_distance_vector_pearson_distance<-data.frame(novosparc_distance_vector_minus_redundant_cells,true_distances)
+
+novosparc_distance_vector_pearson_distance$bin<-cut(novosparc_distance_vector_pearson_distance$as.numeric.dist.original_positions...c.2..3....,c(seq(0,7000,500)))
+
+cor(novosparc_distance_vector_pearson_distance$Var1,as.numeric(novosparc_distance_vector_pearson_distance$Var2),method='pearson')
+table(novosparc_distance_vector_pearson_distance$bin)
+
+
+bin_mean <-aggregate(novosparc_distance_vector_pearson_distance$value, list(novosparc_distance_vector_pearson_distance$bin), function(x) mean = mean(x)) 
+bin_sd <-aggregate(novosparc_distance_vector_pearson_distance$value, list(novosparc_distance_vector_pearson_distance$bin), function(x) sd = sd(x))
+
+
+
+bin_mean$Euclidean_distance<-c(seq(500,7000,500))
+my_y_title <- expression(paste("novoSpaRc's assumption: ", italic("full gene set")))
+ggplot(bin_mean,aes(Euclidean_distance,as.numeric(x)))+geom_point(size=3)+ggtitle(my_y_title)+ geom_errorbar(aes(ymin=as.numeric(x)-as.numeric(bin_sd$x),ymax=as.numeric(x)+as.numeric(bin_sd$x)), width=100,               position=position_dodge(.9)) +  xlab("Reference spatial Euclidean distance") + ylab("Expression distance")+scale_x_continuous( breaks=c(0,500,1500,2500,3500,4500,5500,6500))+theme(text = element_text(size = 15),axis.text.x = element_text( size=15),axis.text.y = element_text( size=15))+geom_line(size=0.1)
+
+```

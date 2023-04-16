@@ -1,0 +1,63 @@
+---
+title: "assess_assumption_novosparc_mouse_liver_lobules"
+author: "Dean de Haas"
+date: "13-9-2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(dplyr)
+library(reshape2)
+library(ggplot2)
+```
+
+load thw names of the cells and the calculated distance matrix by novosparc
+
+```{r cars}
+cell_names <- read.table("~/cell_names.txt", quote="\"", comment.char="")
+novosparc_distance_matrix <- read.csv("~/distance_matrix_liver_lobules.csv", row.names=1)
+liver_lobules_assigned_layers_to_cells <- read.csv(~/liver_lobules_assigned_to_layers_per_cell.txt", sep=";",row.names = 1)
+```
+
+assign names to the matreix and remove the redundant entries
+
+```{r pressure, echo=FALSE}
+row.names(novosparc_distance_matrix)<-cell_names$V1
+colnames(novosparc_distance_matrix)<-cell_names$V1
+novosparc_distance_matrix<-as.matrix(novosparc_distance_matrix)
+
+
+novosparc_distance_matrix[upper.tri(novosparc_distance_matrix,diag=T)]<--1000000
+# vectorize the matrix 
+novosparc_distance_vector <- melt( novosparc_distance_matrix,id.vars=c('from','to'))
+#remove the redundant cells from the matrix (e.g. the 0 values that we previously created)
+novosparc_distance_vector_minus_redundant_cells<-novosparc_distance_vector[!(novosparc_distance_vector$value==-1000000),]
+#novosparc_distance_vector_minus_redundant_cells$value<-abs(novosparc_distance_vector_minus_redundant_cells$value)
+
+
+cells_with_assigned_layers<-data.frame(row.names(liver_lobules_assigned_layers_to_cells),liver_lobules_assigned_layers_to_cells$layer)
+colnames(cells_with_assigned_layers)[1]<-'cells'
+colnames(cells_with_assigned_layers)[2]<-'layer'
+```
+
+assess the correlation between the distances calculated by novosparc and the layers of the liver lobules
+
+```{r setup, include=FALSE}
+true_distances<-as.numeric(dist(liver_lobules_assigned_layers_to_cells,'euclidean'))
+
+
+novosparc_distance_vector_pearson_distance<-data.frame(novosparc_distance_vector_minus_redundant_cells,true_distances)
+
+
+bin_mean <-aggregate(novosparc_distance_vector_pearson_distance$value, list(novosparc_distance_vector_pearson_distance$true_distances), function(x) mean = mean(x)) 
+cor.test(as.numeric(novosparc_distance_vector_pearson_distance$Var1),as.numeric(novosparc_distance_vector_pearson_distance$Var2),method='spearman')
+bin_sd <-aggregate(novosparc_distance_vector_pearson_distance$value, list(novosparc_distance_vector_pearson_distance$true_distances), function(x) sd = sd(x))
+
+
+my_y_title <- expression(paste("novoSpaRc's assumption: ", italic("ligand and receptor genes only")))
+ggplot(bin_mean,aes(Group.1,as.numeric(x)))+geom_point(size=3)+ ggtitle(my_y_title)+geom_line(size=0.5)+
+  geom_errorbar(aes(ymin=as.numeric(x)-as.numeric(bin_sd$x), ymax=as.numeric(x)+as.numeric(bin_sd$x)), width=.2,
+                position=position_dodge(.9)) +
+  xlab("Distance between cells (in layers)") + ylab("Expression distance")+scale_y_continuous( breaks=c(0.05,0.1,0.15,0.20,0.25,0.3,0.35,0.4,0.45,0.5,0.55,0.6,0.65,0.7,0.75,0.80,0.85))+theme(text = element_text(size = 16),axis.text.x = element_text( size=16),axis.text.y = element_text( size=16))  
+
+```

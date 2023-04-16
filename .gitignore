@@ -1,0 +1,107 @@
+##########################################################
+#
+# Rename this file to .gitignore
+#
+# Gitignore
+# https://git-scm.com/docs/gitignore
+# Collection of .gitignore: https://github.com/github/gitignore
+# See also: https://linuxize.com/post/gitignore-ignoring-files-in-git/
+#
+# Notes: 
+# 1. use forward slash
+#
+# 2. Once you have added files to the repo then adding these to gitignore will NOT remove
+#    them from the repo. In thise case you can do:
+#         git rm -rf --cached .    (or remove single/few file(s)
+#         git add .
+#
+##########################################################
+
+# Various types #
+*.txt  
+*.rtf
+!github.txt
+
+*.pdf
+
+# Images
+*.tiff
+*.png
+*.jpg
+*.gif
+*.svg
+
+# Microsoft office #
+*.doc
+*.docx
+*.ppt
+*.pptx
+*.xls
+*.xlsx
+
+# Compiled source #
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+
+# Packages #
+# it's better to unpack these files and commit the raw source
+# git has its own built in compression methods
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# Logs and databases #
+*.log
+*.sql
+*.sqlite
+
+# Video #
+*.wmv
+*.mpg
+*.mpeg
+*.mp4
+*.mov
+*.flv
+*.avi
+*.ogv
+*.ogg
+*.webm
+
+# Audio #
+*.wav
+*.mp3
+*.wma
+*.flac
+
+#Exclude directories
+**/Results/*
+**/Data/*
+#/Data/*
+
+#Exclude specific files
+#/06112020-SolutionCurves_ID001/Code/Martinez_SolutionCurves-logLambda.R
+
+##
+# Exceptions in folders after excluding file types
+# See https://riptutorial.com/git/example/911/exceptions-in-a--gitignore-file
+# See https://stackoverflow.com/questions/987142/make-gitignore-ignore-everything-except-a-few-files
+##
+#!/06112020-SolutionCurves_ID001/
+#!/06112020-SolutionCurves_ID001/*
+#!/06112020-SolutionCurves_ID001/Documentation/
+#/06112020-SolutionCurves_ID001/Documentation/*
+#!/06112020-SolutionCurves_ID001/Documentation/*.pdf
+#!/06112020-SolutionCurves_ID001/Documentation/*.doc
+#!/06112020-SolutionCurves_ID001/Documentation/*.docx
+#!/06112020-SolutionCurves_ID001/Documentation/*.tex
+#!/06112020-SolutionCurves_ID001/Documentation/*.txt
+#!/06112020-SolutionCurves_ID001/Documentation/*.rtf
