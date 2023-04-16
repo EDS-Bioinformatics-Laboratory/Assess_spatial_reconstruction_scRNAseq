@@ -1,19 +1,19 @@
-# Assess spatial reconstruction from scRNAseq
+# Assessing spatial reconstruction from scRNA-seq data
 
+**Date:** 5 Octoberr 2021
 
+**Description:**
+Code from the internship of Dean de Haas. Goal is to assess the assumptions made by CSOmap and novoSpaRc in order to reconstruct the cellular organization from scRNA-seq data
 
-**Date:** 5-10-2021
-
-**Short Description:**
-Internship during which we assessed the assumptions made by CSOmap and novoSpaRc to reconstruct the cellular organization from scRNAseq data
-
-**Your Name:**
+**Project participants:**
 Dean de Haas
 Perry Moerland
 
-This repository contains the files needed to preprocess the scRNAseq datafiles and the files that calculated and show the correlation between the reconstructed tissue and how the tissue was supposed to be
-The files are found in the different repositories and the origina datafiles have been shared with Perry Moerland
-The manuscript corresponding to this repository has been shared with Perry Moerland
+This repository contains the files needed to preprocess the scRNA-seq data and the files used for calculating and plotting the correlation between the reconstructed tissue and the original tissue.
+
+The original data files can be found https://drive.google.com/drive/folders/1zmrrXcdz-WZ6dW1MxZqYsj_O0Zq3DgTk?usp=sharing. 
+
+The thesis can be found at https://www.overleaf.com/8697663533xkwrdszmdgmt
 
 
 
