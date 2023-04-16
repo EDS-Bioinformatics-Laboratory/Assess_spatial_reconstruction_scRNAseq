@@ -1,4 +1,4 @@
-# Assessing spatial reconstruction from scRNA-seq data
+# Assessing spatial reconstruction using scRNA-seq data
 
 **Date:** 5 October 2021
 
